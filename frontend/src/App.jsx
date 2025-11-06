@@ -1,0 +1,115 @@
+import { useEffect, useState } from 'react'
+import { BrowserRouter, Routes, Route, Link, NavLink, Outlet, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './context/AuthContext.jsx'
+import ProtectedRoute from './components/ProtectedRoute.jsx'
+import Login from './pages/Login.jsx'
+import Register from './pages/Register.jsx'
+import StudentDashboard from './pages/student/Dashboard.jsx'
+import StudentLearning from './pages/student/Learning.jsx'
+import StudentQuizzes from './pages/student/Quizzes.jsx'
+import StudentPerformance from './pages/student/Performance.jsx'
+import StudentChat from './pages/student/Chat.jsx'
+import StudentProfile from './pages/student/Profile.jsx'
+import QuizPage from './pages/QuizPage.jsx'
+import InstructorDashboard from './pages/instructor/Dashboard.jsx'
+import AdminDashboard from './pages/admin/Dashboard.jsx'
+import Home from './pages/Home.jsx'
+
+function useTheme() {
+  const [theme, setTheme] = useState(
+    localStorage.getItem('theme') || 'light'
+  )
+
+  useEffect(() => {
+    const root = document.documentElement
+    if (theme === 'dark') {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+    localStorage.setItem('theme', theme)
+  }, [theme])
+
+  return { theme, setTheme }
+}
+
+function Layout({ children }) {
+  const { theme, setTheme } = useTheme()
+  // removed health check visualization per request
+  const { token, user, setToken, setUser } = useAuth()
+
+  useEffect(() => {}, [])
+
+  return (
+    <div className="min-h-screen bg-white text-slate-900 transition-colors dark:bg-slate-900 dark:text-slate-100">
+      <header className="border-b border-slate-200 dark:border-slate-800">
+        <div className="mx-auto max-w-5xl px-4 py-4 flex items-center justify-between">
+          <h1 className="text-xl font-semibold">Adiptify — Adaptive Learning</h1>
+          <div className="flex items-center gap-3">
+            <nav className="hidden gap-4 sm:flex text-sm">
+              <NavLink to="/" end className={({isActive})=>isActive?"underline":undefined}>Home</NavLink>
+              <NavLink to="/student" className={({isActive})=>isActive?"underline":undefined}>Student</NavLink>
+              <NavLink to="/instructor" className={({isActive})=>isActive?"underline":undefined}>Instructor</NavLink>
+              <NavLink to="/admin" className={({isActive})=>isActive?"underline":undefined}>Admin</NavLink>
+            </nav>
+            <button
+              className="rounded-md border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            >
+              {theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
+            </button>
+            {!token ? (
+              <Link to="/login" className="text-sm underline">Login</Link>
+            ) : (
+              <button onClick={() => { setToken(''); setUser(null) }} className="text-sm underline">Logout</button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-6xl px-4 py-10">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600/10 via-indigo-600/10 to-purple-600/10 p-[1px]">
+          <div className="rounded-3xl bg-white p-6 shadow-xl dark:bg-slate-900">
+            <Outlet />
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<Layout />}> 
+            <Route index element={<Home />} />
+            <Route element={<ProtectedRoute roles={["student"]} />}> 
+              <Route path="/student/dashboard" element={<StudentDashboard />} />
+              <Route path="/student/learning" element={<StudentLearning />} />
+              <Route path="/student/quizzes" element={<StudentQuizzes />} />
+              <Route path="/student/performance" element={<StudentPerformance />} />
+              <Route path="/student/chat" element={<StudentChat />} />
+              <Route path="/student/profile" element={<StudentProfile />} />
+              <Route path="/student" element={<Navigate to="/student/dashboard" replace />} />
+            </Route>
+            <Route element={<ProtectedRoute roles={["student","instructor","admin"]} />}> 
+              <Route path="/quiz" element={<QuizPage />} />
+            </Route>
+            <Route element={<ProtectedRoute roles={["instructor","admin"]} />}> 
+              <Route path="/instructor" element={<InstructorDashboard />} />
+            </Route>
+            <Route element={<ProtectedRoute roles={["admin"]} />}> 
+              <Route path="/admin" element={<AdminDashboard />} />
+            </Route>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  )
+}
+
+

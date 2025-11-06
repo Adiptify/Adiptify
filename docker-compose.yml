@@ -1,0 +1,41 @@
+version: '3.9'
+services:
+  mongo:
+    image: mongo:7
+    container_name: nimbus-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  api:
+    build:
+      context: ./backend
+    container_name: nimbus-api
+    restart: unless-stopped
+    environment:
+      - PORT=4000
+      - MONGO_URI=mongodb://mongo:27017
+      - MONGO_DB=nimbus
+      - JWT_SECRET=replace_me
+      - OLLAMA_BASE_URL=http://ollama:11434
+    ports:
+      - "4000:4000"
+    depends_on:
+      - mongo
+    # Uncomment if you add a Dockerfile and want live mounts for local dev
+     volumes:
+       - ./backend:/app
+
+  ollama:
+     image: ollama/ollama:latest
+     container_name: nimbus-ollama
+     restart: unless-stopped
+     ports:
+       - "11434:11434"
+
+volumes:
+  mongo_data:
+
+

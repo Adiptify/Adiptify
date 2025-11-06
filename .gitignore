@@ -1,0 +1,17 @@
+# Node
+node_modules/
+npm-debug.log
+.env
+
+# Build output
+dist/
+build/
+
+# IDE
+.vscode/
+.DS_Store
+
+# Runtime
+coverage/
+tmp/
+.cache/
